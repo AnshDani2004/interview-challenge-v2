@@ -6,19 +6,20 @@ Please follow the instructions below to define data modules, generate a database
 
 Below are all the tasks/expectations required to complete this challenge. These tasks are not listed in any defined order, and you may go about these tasks in any order you see best:
 
-**Please organize these tasks and update the ReadMe based on the order you complete them!**
+**Tasks organized in order of completion:**
 
-- Create data models - example with sqlalchemy in "app\models.py"
-- Create an endpoint that returns business and symptom data
-  - Endpoint should take two optional parameters - business_id & diagnostic
-  - Endpoint should return Business ID, Business Name, Symptom Code, Symptom Name, and Symptom Diagnostic values based on filter
-- Generate migration script and run migration to create database tables - alembic files provided
-  - To create a migration file: "alembic revision --autogenerate -m some_comment"
-  - To update database with migration file: "alembic upgrade head"
-- Design a database mock up based on the provided data - "app\data\business_symptom_data.csv"
-- Create an endpoint for importing a CSV file into the database
-  - The only requirement is the endpoint requires a CSV file. If needed, other parameters can be used.
-- Create a virtual environment and install the requirements - "requirements\requirements.txt"
+Task 1 - Create a virtual environment and install the requirements - "requirements\requirements.txt"
+
+Task 2 - Generate migration script and run migration to create database tables - alembic files provided (To create a migration file: "alembic revision --autogenerate -m some_comment" & To update database with migration file: "alembic upgrade head")
+         
+Task 3 - Design a database mock up based on the provided data - "app\data\business_symptom_data.csv"
+
+Task 4 - Create data models - example with sqlalchemy in "app\models.py"
+
+Task 5 - Create an endpoint for importing a CSV file into the database (The only requirement is the endpoint requires a CSV file. If needed, other parameters can be used.)
+         
+Task 6 - Create an endpoint that returns business and symptom data (Endpoint should take two optional parameters - business_id & diagnostic & Endpoint should return Business ID, Business Name, Symptom Code, Symptom Name, and Symptom Diagnostic values based on filter)
+
 
 As a note, FastAPI, uvicorn, sqlalchemy, and alembic are not required to be used and may be changed if desired. 
 Any of the existing files or variables can be and may need to be changed or updated, please be prepared to explain changes on the follow-up call.
