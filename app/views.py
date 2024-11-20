@@ -77,6 +77,7 @@ async def get_data(
     db: Session = Depends(get_db)
 ):
     try:
+        # Build the query
         query = db.query(
             Business.id.label("Business ID"),
             Business.name.label("Business Name"),
@@ -91,9 +92,23 @@ async def get_data(
         if diagnostic:
             query = query.filter(Symptom.diagnostic == diagnostic.lower())  # Normalize diagnostic filter
 
+        # Execute the query
         results = query.all()
 
-        return {"data": [dict(row) for row in results]}
+        # Transform the results into the desired format
+        results_list = [
+            {
+                "Business ID": row[0],  # Corresponds to Business.id.label("Business ID")
+                "Business Name": row[1],  # Corresponds to Business.name.label("Business Name")
+                "Symptom Code": row[2],  # Corresponds to Symptom.code.label("Symptom Code")
+                "Symptom Name": row[3],  # Corresponds to Symptom.name.label("Symptom Name")
+                "Symptom Diagnostic": row[4]  # Corresponds to Symptom.diagnostic.label("Symptom Diagnostic")
+            }
+            for row in results
+        ]
+
+        # Return the formatted response
+        return {"data": results_list}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
