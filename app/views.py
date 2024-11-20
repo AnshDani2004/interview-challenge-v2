@@ -24,45 +24,42 @@ async def get_status():
     except Exception as e:
         return {'Error': str(e)}
 
-# Import CSV endpoint
 @router.post('/import-csv/', summary="Import CSV")
 async def import_csv(file: UploadFile, db: Session = Depends(get_db)):
-    """
-    Import data from a CSV file into the database.
-    """
     try:
-        content = await file.read()
-        data = content.decode('utf-8').splitlines()
-        reader = csv.reader(data)
+        contents = await file.read()
+        csv_data = contents.decode('utf-8').splitlines()
+        reader = csv.reader(csv_data)
 
-        # Skip the header row
-        next(reader, None)
+        next(reader)  # Skip header row
 
         for row in reader:
-            # Extract data from the CSV row
-            business_id, business_name, symptom_code, symptom_name, symptom_diagnostic = row
+            business_id = int(row[0].strip())
+            business_name = row[1].strip()
+            symptom_code = row[2].strip()
+            symptom_name = row[3].strip()
+            symptom_diagnostic = row[4].strip().lower()  # Normalize for consistency
 
-            # Check if the business already exists by name (to avoid foreign key constraint violation)
-            business = db.query(Business).filter(Business.name == business_name).first()
-
+            # Check if the business exists by ID
+            business = db.query(Business).filter(Business.id == business_id).first()
             if not business:
-                # If business does not exist, create a new record
+                # Create a new business record if it doesn't exist
                 business = Business(id=business_id, name=business_name)
                 db.add(business)
-                db.commit()  # Commit after adding the business
+                db.commit()
 
-            # Ensure the symptom exists or create it
+            # Check if the symptom already exists
             symptom = db.query(Symptom).filter(
                 Symptom.code == symptom_code,
-                Symptom.business_id == business_id
+                Symptom.business_id == business.id
             ).first()
 
             if not symptom:
                 symptom = Symptom(
                     code=symptom_code,
                     name=symptom_name,
-                    diagnostic=symptom_diagnostic,  # Keep as string
-                    business_id=business.id  # Ensure correct foreign key
+                    diagnostic=symptom_diagnostic,
+                    business_id=business.id
                 )
                 db.add(symptom)
 
@@ -76,46 +73,27 @@ async def import_csv(file: UploadFile, db: Session = Depends(get_db)):
 @router.get('/data', summary="Get Business and Symptom Data")
 async def get_data(
     business_id: Optional[int] = Query(None, description="Filter by Business ID"),
-    diagnostic: Optional[bool] = Query(None, description="Filter by Symptom Diagnostic"),
+    diagnostic: Optional[str] = Query(None, description="Filter by Symptom Diagnostic (true/false)"),
     db: Session = Depends(get_db)
 ):
-    """
-    Get data from the database based on optional filters for business_id and diagnostic.
-    """
     try:
-        # Query Business and Symptom Data
         query = db.query(
-            Business.id.label("Business ID"), 
-            Business.name.label("Business Name"), 
-            Symptom.code.label("Symptom Code"), 
-            Symptom.name.label("Symptom Name"), 
+            Business.id.label("Business ID"),
+            Business.name.label("Business Name"),
+            Symptom.code.label("Symptom Code"),
+            Symptom.name.label("Symptom Name"),
             Symptom.diagnostic.label("Symptom Diagnostic")
         ).join(Symptom)
 
-        # Apply Filters if provided
+        # Apply Filters
         if business_id:
             query = query.filter(Business.id == business_id)
-        if diagnostic is not None:  # Explicit check for None since it's a boolean
-            # Convert the boolean to string for comparison with symptom.diagnostic
-            query = query.filter(Symptom.diagnostic == str(diagnostic).lower())  # 'true' or 'false'
+        if diagnostic:
+            query = query.filter(Symptom.diagnostic == diagnostic.lower())  # Normalize diagnostic filter
 
-        # Execute the query
         results = query.all()
 
-        # Convert the results to a list of dictionaries
-        results_list = [
-            {
-                "Business ID": row[0],
-                "Business Name": row[1],
-                "Symptom Code": row[2],
-                "Symptom Name": row[3],
-                "Symptom Diagnostic": row[4]
-            }
-            for row in results
-        ]
-
-        # Return the results
-        return {"data": results_list}
+        return {"data": [dict(row) for row in results]}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
